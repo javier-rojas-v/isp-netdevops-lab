@@ -1,0 +1,158 @@
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+{% if bgp_enabled | default(false) %}
+    <vrf>
+      <definition>
+        <name>UPSTREAM-TIER1</name>
+        <rd>{{ upstream_asn }}:100</rd>
+        <address-family>
+          <ipv4/>
+        </address-family>
+      </definition>
+    </vrf>
+{% endif %}
+    <interface>
+      <Loopback>
+        <name>0</name>
+        <description>ISP-LOOPBACK-ROUTER-ID</description>
+        <ip>
+          <address>
+            <primary>
+              <address>{{ loopback_ip }}</address>
+              <mask>{{ loopback_mask }}</mask>
+            </primary>
+          </address>
+        </ip>
+      </Loopback>
+{% for iface in p2p_interfaces %}
+      <GigabitEthernet>
+        <name>{{ iface.name }}</name>
+        <description>{{ iface.description }}</description>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <ip>
+          <address>
+            <primary>
+              <address>{{ iface.ip }}</address>
+              <mask>{{ iface.mask }}</mask>
+            </primary>
+          </address>
+          <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+            <network>
+              <point-to-point/>
+            </network>
+          </ospf>
+        </ip>
+      </GigabitEthernet>
+{% endfor %}
+{% if bgp_enabled | default(false) %}
+      <GigabitEthernet>
+        <name>3</name>
+        <description>EBGP-TO-UPSTREAM-TIER1-AS{{ upstream_asn }}</description>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <ip>
+          <address>
+            <primary>
+              <address>{{ ebgp_local_ip }}</address>
+              <mask>{{ ebgp_mask }}</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+      <GigabitEthernet>
+        <name>4</name>
+        <description>SIMULATED-TIER1-PEERING-INTERFACE</description>
+        <vrf>
+          <forwarding>UPSTREAM-TIER1</forwarding>
+        </vrf>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <ip>
+          <address>
+            <primary>
+              <address>{{ ebgp_peer_ip }}</address>
+              <mask>{{ ebgp_mask }}</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+{% endif %}
+    </interface>
+    <router>
+      <router-ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+        <ospf>
+          <process-id>
+            <id>{{ ospf_process_id }}</id>
+            <router-id>{{ router_id }}</router-id>
+            <passive-interface>
+              <default/>
+            </passive-interface>
+{% for iface in p2p_interfaces %}
+            <passive-interface>
+              <interface>
+                <name>GigabitEthernet{{ iface.name }}</name>
+                <disable/>
+              </interface>
+            </passive-interface>
+{% endfor %}
+{% for net in ospf_networks %}
+            <network>
+              <ip>{{ net.network }}</ip>
+              <wildcard>{{ net.wildcard }}</wildcard>
+              <area>{{ net.area }}</area>
+            </network>
+{% endfor %}
+          </process-id>
+        </ospf>
+      </router-ospf>
+{% if bgp_enabled | default(false) %}
+      <bgp xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-bgp">
+        <id>{{ local_asn }}</id>
+        <bgp>
+          <log-neighbor-changes>true</log-neighbor-changes>
+          <router-id>
+            <ip-id>{{ router_id }}</ip-id>
+          </router-id>
+        </bgp>
+        <neighbor>
+          <id>{{ ebgp_peer_ip }}</id>
+          <remote-as>{{ upstream_asn }}</remote-as>
+          <description>UPSTREAM-TIER1-TRANSIT</description>
+        </neighbor>
+        <address-family>
+          <no-vrf>
+            <ipv4>
+              <af-name>unicast</af-name>
+              <ipv4-unicast>
+                <neighbor>
+                  <id>{{ ebgp_peer_ip }}</id>
+                  <activate/>
+                </neighbor>
+                <network>
+                  <with-mask>
+                    <number>{{ loopback_ip }}</number>
+                    <mask>{{ loopback_mask }}</mask>
+                  </with-mask>
+                </network>
+              </ipv4-unicast>
+            </ipv4>
+          </no-vrf>
+          <with-vrf>
+            <ipv4>
+              <af-name>unicast</af-name>
+              <vrf>
+                <name>UPSTREAM-TIER1</name>
+                <ipv4-unicast>
+                  <neighbor>
+                    <id>{{ ebgp_local_ip }}</id>
+                    <remote-as>{{ local_asn }}</remote-as>
+                    <activate/>
+                  </neighbor>
+                </ipv4-unicast>
+              </vrf>
+            </ipv4>
+          </with-vrf>
+        </address-family>
+      </bgp>
+{% endif %}
+    </router>
+  </native>
+</config>

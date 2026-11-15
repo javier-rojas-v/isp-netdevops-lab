@@ -1,0 +1,26 @@
+---
+router_id: "10.255.255.2"
+loopback_ip: "10.255.255.2"
+loopback_mask: "255.255.255.255"
+
+p2p_interfaces:
+  - name: "2"
+    description: "P2P-EDGE01-TO-CORE01"
+    ip: "10.0.0.1"
+    mask: "255.255.255.254"
+
+ospf_process_id: 1
+ospf_networks:
+  - network: "10.0.0.0"
+    wildcard: "0.0.0.1"
+    area: 0
+  - network: "10.255.255.2"
+    wildcard: "0.0.0.0"
+    area: 0
+
+bgp_enabled: true
+local_asn: 65001
+upstream_asn: 64512
+ebgp_local_ip: "203.0.113.1"
+ebgp_peer_ip: "203.0.113.0"
+ebgp_mask: "255.255.255.254"

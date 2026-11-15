@@ -1,0 +1,16 @@
+---
+- name: Provision ISP Underlay (OSPF) and Edge Peering (eBGP) via NETCONF
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Push declarative YANG configuration for Interfaces, OSPF, and BGP
+      ansible.netcommon.netconf_config:
+        target: running
+        default_operation: merge
+        content: "{{ lookup('template', '../templates/iosxe_routing_netconf.xml.j2') }}"
+      register: netconf_result
+
+    - name: Display NETCONF transaction status
+      ansible.builtin.debug:
+        msg: "Router {{ inventory_hostname }} updated successfully (changed={{ netconf_result.changed }})"
