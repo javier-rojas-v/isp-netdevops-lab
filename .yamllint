@@ -4,8 +4,9 @@ ignore: |
   venv/
 
 rules:
+  document-start: disable
   line-length:
     max: 140
     level: warning
   truthy:
-    allowed-values: ['true', 'false', 'yes', 'no']
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
