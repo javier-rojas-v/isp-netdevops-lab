@@ -44,3 +44,10 @@
         parents:
           - router bgp 65001
           - address-family ipv4 vrf UPSTREAM-TIER1
+
+    - name: Ensure BGP process initializes router-id on CSR-CORE-01
+      cisco.ios.ios_config:
+        lines:
+          - bgp router-id 10.255.255.1
+          - bgp log-neighbor-changes
+        parents: router bgp 65001
