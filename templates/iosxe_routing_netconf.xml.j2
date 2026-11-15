@@ -28,7 +28,7 @@
       <GigabitEthernet>
         <name>{{ iface.name }}</name>
         <description>{{ iface.description }}</description>
-        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="remove"/>
         <ip>
           <address>
             <primary>
@@ -37,9 +37,7 @@
             </primary>
           </address>
           <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
-            <network>
-              <point-to-point/>
-            </network>
+            <network>point-to-point</network>
           </ospf>
         </ip>
       </GigabitEthernet>
@@ -48,7 +46,7 @@
       <GigabitEthernet>
         <name>3</name>
         <description>EBGP-TO-UPSTREAM-TIER1-AS{{ upstream_asn }}</description>
-        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="remove"/>
         <ip>
           <address>
             <primary>
@@ -64,7 +62,7 @@
         <vrf>
           <forwarding>UPSTREAM-TIER1</forwarding>
         </vrf>
-        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="delete"/>
+        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="remove"/>
         <ip>
           <address>
             <primary>
@@ -77,32 +75,25 @@
 {% endif %}
     </interface>
     <router>
-      <router-ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
-        <ospf>
-          <process-id>
-            <id>{{ ospf_process_id }}</id>
-            <router-id>{{ router_id }}</router-id>
-            <passive-interface>
-              <default/>
-            </passive-interface>
+      <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+        <id>{{ ospf_process_id }}</id>
+        <router-id>{{ router_id }}</router-id>
+        <passive-interface>
+          <default/>
+        </passive-interface>
 {% for iface in p2p_interfaces %}
-            <passive-interface>
-              <interface>
-                <name>GigabitEthernet{{ iface.name }}</name>
-                <disable/>
-              </interface>
-            </passive-interface>
+        <passive-interface>
+          <interface>GigabitEthernet{{ iface.name }}</interface>
+        </passive-interface>
 {% endfor %}
 {% for net in ospf_networks %}
-            <network>
-              <ip>{{ net.network }}</ip>
-              <wildcard>{{ net.wildcard }}</wildcard>
-              <area>{{ net.area }}</area>
-            </network>
+        <network>
+          <ip>{{ net.network }}</ip>
+          <mask>{{ net.wildcard }}</mask>
+          <area>{{ net.area }}</area>
+        </network>
 {% endfor %}
-          </process-id>
-        </ospf>
-      </router-ospf>
+      </ospf>
 {% if bgp_enabled | default(false) %}
       <bgp xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-bgp">
         <id>{{ local_asn }}</id>
