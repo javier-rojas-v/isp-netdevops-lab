@@ -1,16 +1,5 @@
 <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-{% if bgp_enabled | default(false) %}
-    <vrf>
-      <definition>
-        <name>UPSTREAM-TIER1</name>
-        <rd>{{ upstream_asn }}:100</rd>
-        <address-family>
-          <ipv4/>
-        </address-family>
-      </definition>
-    </vrf>
-{% endif %}
     <interface>
       <Loopback>
         <name>0</name>
@@ -56,36 +45,13 @@
           </address>
         </ip>
       </GigabitEthernet>
-      <GigabitEthernet>
-        <name>4</name>
-        <description>SIMULATED-TIER1-PEERING-INTERFACE</description>
-        <vrf>
-          <forwarding>UPSTREAM-TIER1</forwarding>
-        </vrf>
-        <shutdown xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="remove"/>
-        <ip>
-          <address>
-            <primary>
-              <address>{{ ebgp_peer_ip }}</address>
-              <mask>{{ ebgp_mask }}</mask>
-            </primary>
-          </address>
-        </ip>
-      </GigabitEthernet>
 {% endif %}
     </interface>
     <router>
       <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
         <id>{{ ospf_process_id }}</id>
         <router-id>{{ router_id }}</router-id>
-        <passive-interface>
-          <default/>
-        </passive-interface>
-{% for iface in p2p_interfaces %}
-        <passive-interface>
-          <interface>GigabitEthernet{{ iface.name }}</interface>
-        </passive-interface>
-{% endfor %}
+        <passive-interface xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" nc:operation="remove"/>
 {% for net in ospf_networks %}
         <network>
           <ip>{{ net.network }}</ip>
@@ -126,21 +92,6 @@
               </ipv4-unicast>
             </ipv4>
           </no-vrf>
-          <with-vrf>
-            <ipv4>
-              <af-name>unicast</af-name>
-              <vrf>
-                <name>UPSTREAM-TIER1</name>
-                <ipv4-unicast>
-                  <neighbor>
-                    <id>{{ ebgp_local_ip }}</id>
-                    <remote-as>{{ local_asn }}</remote-as>
-                    <activate/>
-                  </neighbor>
-                </ipv4-unicast>
-              </vrf>
-            </ipv4>
-          </with-vrf>
         </address-family>
       </bgp>
 {% endif %}
