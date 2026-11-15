@@ -6,7 +6,7 @@
     ansible_connection: ansible.netcommon.network_cli
 
   tasks:
-    - name: Remove leftover lab VRF and interfaces if present
+    - name: Remove leftover lab VRF address-family if present
       cisco.ios.ios_config:
         lines:
           - no address-family ipv4 vrf UPSTREAM-TIER1
@@ -20,13 +20,19 @@
           - no vrf definition UPSTREAM-TIER1
       failed_when: false
 
-- name: Provision Simulated Tier-1 Upstream Peer on CSR-CORE-01 (Lab Infrastructure Only)
+- name: Provision Native AS 64512 Tier-1 Upstream Peer on CSR-CORE-01
   hosts: CSR-CORE-01
   gather_facts: false
   vars:
     ansible_connection: ansible.netcommon.network_cli
 
   tasks:
+    - name: Remove any previous BGP 65001 lab process on CSR-CORE-01
+      cisco.ios.ios_config:
+        lines:
+          - no router bgp 65001
+      failed_when: false
+
     - name: Configure UPSTREAM-TIER1 VRF
       cisco.ios.ios_config:
         lines:
@@ -42,19 +48,18 @@
           - no shutdown
         parents: interface GigabitEthernet3
 
-    - name: Initialize BGP process router-id on CSR-CORE-01
+    - name: Configure native BGP AS 64512 process and router-id
       cisco.ios.ios_config:
         lines:
           - bgp router-id 10.255.255.1
           - bgp log-neighbor-changes
-        parents: router bgp 65001
+        parents: router bgp 64512
 
     - name: Configure eBGP neighbor inside UPSTREAM-TIER1 VRF
       cisco.ios.ios_config:
         lines:
           - neighbor 203.0.113.1 remote-as 65001
-          - neighbor 203.0.113.1 local-as 64512 no-prepend replace-as
           - neighbor 203.0.113.1 activate
         parents:
-          - router bgp 65001
+          - router bgp 64512
           - address-family ipv4 vrf UPSTREAM-TIER1
