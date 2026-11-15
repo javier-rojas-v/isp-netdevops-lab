@@ -1,0 +1,19 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: "{{ lookup('env', 'NETBOX_URL') }}"
+token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+validate_certs: false
+
+group_by:
+  - device_roles
+  - sites
+
+query_filters:
+  - status: active
+
+compose:
+  ansible_host: primary_ip4.split('/')[0]
+  ansible_network_os: "'cisco.ios.ios'"
+  ansible_connection: "'ansible.netcommon.netconf'"
+  ansible_port: 830
+  ansible_user: lookup('env', 'ROUTER_USER')
+  ansible_password: lookup('env', 'ROUTER_PASS')
