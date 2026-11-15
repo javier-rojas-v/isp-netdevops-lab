@@ -1,0 +1,15 @@
+# Entornos virtuales y caches de Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Secretos y variables de entorno locales (NUNCA subir a Git)
+.env
+*.vault
+*secret*
+
+# Archivos temporales de Ansible y SO
+*.retry
+.DS_Store
+.vscode/
