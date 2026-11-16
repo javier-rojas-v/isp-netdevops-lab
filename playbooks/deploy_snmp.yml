@@ -1,0 +1,16 @@
+---
+- name: Configure SNMPv2c Read-Only Telemetry on ISP Routers
+  hosts: all
+  gather_facts: false
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    snmp_community: ISP_NOC_RO
+
+  tasks:
+    - name: Configure SNMP community, location, and contact
+      cisco.ios.ios_config:
+        lines:
+          - snmp-server community {{ snmp_community }} RO
+          - snmp-server location DC-SANTIAGO-LAB
+          - snmp-server contact noc@urustech.dev
+        save_when: modified
